@@ -17,14 +17,12 @@ func readDailyPV(c *gin.Context, tableName string) common.JSON {
 	type RequestBody struct {
 		Url string `json:"url" binding:"required"`
 	}
-	fmt.Println("Get requestBody parameters")
 	var requestBody RequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
 		fmt.Println(err)
 		c.AbortWithStatus(400)
 		return nil
 	}
-	fmt.Println(requestBody.Url)
 
 	var stat StatPagePV
 	db.Table(tableName).Where("page_url = ?", requestBody.Url).First(&stat)
@@ -58,7 +56,6 @@ func QuerySparkPVByAuthor(db *gorm.DB, betweenDate []string, author string) int 
 			table := common.GetSparkPVTableName(date)
 			var sum SumPV
 			db.Table(table).Select("sum(pv) as total").Where("page_author = ?", author).Scan(&sum)
-			fmt.Println("SumPV:", sum.Total)
 			pvChan <- sum.Total
 		}
 		close(pvChan)
@@ -78,7 +75,6 @@ func QuerySparkPVByHost(db *gorm.DB, betweenDate []string, hostName string) int 
 			table := common.GetSparkPVTableName(date)
 			var sum SumPV
 			db.Table(table).Select("sum(pv) as total").Where("page_hostname= ?", hostName).Scan(&sum)
-			fmt.Println("SumPV:", sum.Total)
 			pvChan <- sum.Total
 		}
 		close(pvChan)
@@ -96,9 +92,7 @@ func QueryUrlList(db *gorm.DB, betweenDate []string, urls []string) []common.JSO
 	result := make(chan int)
 	go func() {
 		for _, url := range urls {
-			fmt.Println("result: ", result)
 			pv := QuerySparkPVByUrl(db, betweenDate, url)
-			fmt.Println("pv: ", pv)
 			result <- pv
 		}
 		close(result)
