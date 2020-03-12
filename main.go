@@ -3,6 +3,7 @@ package main
 import (
 	"DataApi.Go/api"
 	"DataApi.Go/database"
+	"DataApi.Go/middleware"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -17,6 +18,7 @@ func main() {
 	db, _ := database.Initialize()
 	port := os.Getenv("PORT")
 	app := gin.Default()
+	app.Use(middleware.LoggerToFile())
 	app.Use(database.Inject(db))
 	app.GET("/hello/:name", func(c *gin.Context) {
 		name := c.Param("name")
