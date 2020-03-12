@@ -16,6 +16,9 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
+    volumes:
+      - ./log/:/usr/local/go/src/DataApi.Go/log
+    command: supervisord -n
     logging:
       driver: "json-file"
       options:
