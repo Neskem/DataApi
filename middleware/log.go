@@ -16,14 +16,7 @@ func LoggerToFile() gin.HandlerFunc {
 	LogFileName := os.Getenv("LOG_FILE_NAME")
 
 	fileName := path.Join(LogFilePath, LogFileName)
-	//src, err := os.OpenFile(fileName, os.O_APPEND | os.O_WRONLY, os.ModeAppend)
-	//if err != nil {
-	//	fmt.Println("err", err)
-	//}
-	//
 	logger := logrus.New()
-	//logger.Out = src
-	//logger.SetLevel(logrus.DebugLevel)
 	logWriter, err := rotatelogs.New(
 		fileName + ".%Y%m%d.log",
 		rotatelogs.WithLinkName(fileName),

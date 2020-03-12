@@ -3,7 +3,6 @@ package orm
 import (
 	"DataApi.Go/database/models"
 	"DataApi.Go/lib/common"
-	"fmt"
 	"github.com/jinzhu/gorm"
 )
 
@@ -21,9 +20,7 @@ func GetTotalList(db *gorm.DB, urls []string) []common.JSON{
 	result := make(chan int)
 	go func() {
 		for _, url := range urls {
-			fmt.Println("result: ", result)
 			pv := QueryTotalPV(db, url)
-			fmt.Println("pv: ", pv)
 			result <- pv
 		}
 		close(result)

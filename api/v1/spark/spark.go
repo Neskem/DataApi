@@ -8,7 +8,6 @@ import (
 func ApplyRoutes(r *gin.RouterGroup) {
 	posts := r.Group("/spark")
 	{
-		posts.POST("/create", create)
 		posts.POST("/pv_by_urls", readDailyPV)
 		posts.POST("/pv_monthly_by_urls", readMonthlyPV)
 		posts.POST("total_pv_by_urls", readTotalPV)

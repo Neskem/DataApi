@@ -15,12 +15,10 @@ type Post = models.Post
 
 func create(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
-	fmt.Println("Starting to create")
 	type RequestBody struct {
 		Url string `json:"url" binding:"required"`
 		Pv int `json:"pv" binding:"required"`
 	}
-	fmt.Println("Create requestBody parameters")
 	var requestBody RequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
 		fmt.Println(err)
@@ -36,11 +34,9 @@ func create(c *gin.Context) {
 
 func read(c *gin.Context)  {
 	db := c.MustGet("db").(*gorm.DB)
-	fmt.Println("Starting to read")
 	type RequestBody struct {
 		Url string `json:"url" binding:"required"`
 	}
-	fmt.Println("Get requestBody parameters")
 	var requestBody RequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
 		fmt.Println(err)
@@ -64,14 +60,12 @@ func readDailyPV(c *gin.Context) {
 		StartDate int `json:"start_date" binding:"required"`
 		EndDate int `json:"end_date" binding:"required"`
 	}
-	fmt.Println("Get requestBody parameters")
 	var requestBody RequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
 		fmt.Println(err)
 		c.AbortWithStatus(400)
 		return
 	}
-	fmt.Println(requestBody.Urls)
 
 	betweenDates := common.GetBetweenDays(requestBody.StartDate, requestBody.EndDate)
 
@@ -87,14 +81,12 @@ func readMonthlyPV(c *gin.Context) {
 		Urls []string `json:"urls" binding:"required"`
 		Month int `json:"month" binding:"required"`
 	}
-	fmt.Println("Get requestBody parameters")
 	var requestBody RequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
 		fmt.Println(err)
 		c.AbortWithStatus(400)
 		return
 	}
-	fmt.Println(requestBody.Urls)
 
 	result := orm.GetMonthlyList(db, strconv.Itoa(requestBody.Month), requestBody.Urls)
 	c.JSON(200, result)
@@ -107,14 +99,12 @@ func readTotalPV(c *gin.Context) {
 	type RequestBody struct {
 		Urls []string `json:"urls" binding:"required"`
 	}
-	fmt.Println("Get requestBody parameters")
 	var requestBody RequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
 		fmt.Println(err)
 		c.AbortWithStatus(400)
 		return
 	}
-	fmt.Println(requestBody.Urls)
 
 	result := orm.GetTotalList(db, requestBody.Urls)
 	c.JSON(200, result)

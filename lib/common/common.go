@@ -3,7 +3,6 @@ package common
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -78,6 +77,5 @@ func GetPageID(unParsedUrl string) string {
 	}
 	hashCode := sha1.New()
 	hashCode.Write([]byte(text))
-	fmt.Println("text: ", text)
 	return hex.EncodeToString(hashCode.Sum(nil))
 }
