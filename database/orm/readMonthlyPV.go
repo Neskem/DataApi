@@ -1,12 +1,12 @@
 package orm
 
 import (
-	"DataApi.Go/database/models"
+	"DataApi.Go/database/models/PV"
 	"DataApi.Go/lib/common"
 	"github.com/jinzhu/gorm"
 )
 
-type PVMonthly = models.PVMonthly
+type PVMonthly = PV.PVMonthly
 
 
 func QueryMonthlyPV(db *gorm.DB, month string, url string) int {

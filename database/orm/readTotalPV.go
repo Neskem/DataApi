@@ -1,12 +1,12 @@
 package orm
 
 import (
-	"DataApi.Go/database/models"
+	"DataApi.Go/database/models/PV"
 	"DataApi.Go/lib/common"
 	"github.com/jinzhu/gorm"
 )
 
-type PVPageIdSum = models.PVPageIdSum
+type PVPageIdSum = PV.PVPageIdSum
 
 func QueryTotalPV(db *gorm.DB, url string) int {
 	table := "pv_pageid_sum"

@@ -15,7 +15,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	db, _ := database.Initialize()
+	dbConfig := os.Getenv("DB_CONFIG")
+	db, _ := database.Initialize(dbConfig)
 	port := os.Getenv("PORT")
 	app := gin.Default()
 	app.Use(middleware.LoggerToFile())
