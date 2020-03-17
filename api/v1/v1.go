@@ -2,6 +2,7 @@ package v1
 
 import (
 	spark "DataApi.Go/api/v1/spark"
+	"DataApi.Go/api/v1/ypa"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,5 +18,6 @@ func ApplyRoutes(r *gin.RouterGroup) {
 	{
 		v1.GET("/ping", ping)
 		spark.ApplyRoutes(v1)
+		ypa.ApplyRoutes(v1)
 	}
 }

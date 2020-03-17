@@ -11,7 +11,7 @@ import (
 
 type JSON = map[string]interface{}
 
-func GetBetweenDays(startDate int, endDate int) []string {
+func GetBetweenDays(startDate int, endDate int, convertDate bool) []string {
 	var betweenDays []string
 	startYear := startDate / 1e4
 	startMonth := (startDate % 1e4)/ 1e2
@@ -24,7 +24,11 @@ func GetBetweenDays(startDate int, endDate int) []string {
 	finalDay := time.Date(endYear, time.Month(endMonth), endDay, 0, 0, 0, 0, time.UTC)
 
 	between := int(finalDay.Sub(currentDay).Hours() / 24)
-	betweenDays = append(betweenDays, strconv.Itoa(startDate))
+	if convertDate == true {
+		betweenDays = append(betweenDays, convertTime(startDate))
+	} else {
+		betweenDays = append(betweenDays, strconv.Itoa(startDate))
+	}
 	for i := 0; i < between; i++ {
 		var month string
 		var day string
@@ -43,8 +47,12 @@ func GetBetweenDays(startDate int, endDate int) []string {
 		} else {
 			day = strconv.Itoa(d)
 		}
-
-		currentDayString := strconv.Itoa(currentDay.Year()) + month + day
+		var currentDayString string
+		if convertDate == true {
+			currentDayString = strconv.Itoa(currentDay.Year()) + "-" + month + "-" + day
+		} else {
+			currentDayString = strconv.Itoa(currentDay.Year()) + month + day
+		}
 		betweenDays = append(betweenDays, currentDayString)
 	}
 
@@ -78,4 +86,24 @@ func GetPageID(unParsedUrl string) string {
 	hashCode := sha1.New()
 	hashCode.Write([]byte(text))
 	return hex.EncodeToString(hashCode.Sum(nil))
+}
+
+func convertTime(date int) string {
+	year := date / 1e4
+	month := (date % 1e4) / 1e2
+	day := date % 1e2
+
+	var m, d string
+	if month < 10 {
+		m = "0" + strconv.Itoa(int(month))
+	} else {
+		m = strconv.Itoa(int(month))
+	}
+
+	if day < 10 {
+		d = "0" + strconv.Itoa(day)
+	} else {
+		d = strconv.Itoa(day)
+	}
+	return strconv.Itoa(year) + "-" + m + "-" + d
 }

@@ -1,15 +1,15 @@
 package orm
 
 import (
-	"DataApi.Go/database/models"
+	"DataApi.Go/database/models/PV"
 	"DataApi.Go/lib/common"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
 
-type StatPagePV = models.StatPagePV
-type SumPV = models.SumPV
+type StatPagePV = PV.StatPagePV
+type SumPV = PV.SumPV
 
 func readDailyPV(c *gin.Context, tableName string) common.JSON {
 	db := c.MustGet("db").(*gorm.DB)

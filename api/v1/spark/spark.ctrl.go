@@ -2,6 +2,7 @@ package spark
 
 import (
 	"DataApi.Go/database/models"
+	"DataApi.Go/database/models/PV"
 	"DataApi.Go/database/orm"
 	"DataApi.Go/lib/common"
 	"fmt"
@@ -10,7 +11,7 @@ import (
 	"strconv"
 )
 
-type StatPagePV = models.StatPagePV
+type StatPagePV = PV.StatPagePV
 type Post = models.Post
 
 func create(c *gin.Context) {
@@ -67,7 +68,7 @@ func readDailyPV(c *gin.Context) {
 		return
 	}
 
-	betweenDates := common.GetBetweenDays(requestBody.StartDate, requestBody.EndDate)
+	betweenDates := common.GetBetweenDays(requestBody.StartDate, requestBody.EndDate, false)
 
 	result := orm.QueryUrlList(db, betweenDates, requestBody.Urls)
 	c.JSON(200, result)
@@ -111,25 +112,25 @@ func readTotalPV(c *gin.Context) {
 
 }
 
-func readAuthorPV(c *gin.Context) {
+func getAuthorPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
-	startDate, _ := strconv.Atoi(c.Param("start_date"))
-	endDate, _ := strconv.Atoi(c.Param("end_date"))
-	author := c.Param("author")
+	startDate, _ := strconv.Atoi(c.Query("start_date"))
+	endDate, _ := strconv.Atoi(c.Query("end_date"))
+	author := c.Query("author")
 
-	betweenDates := common.GetBetweenDays(startDate, endDate)
+	betweenDates := common.GetBetweenDays(startDate, endDate, false)
 	result := orm.QueryAuthor(db, betweenDates, author)
 	c.JSON(200, result)
 
 }
 
-func readHostPV(c *gin.Context) {
+func getHostPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
-	startDate, _ := strconv.Atoi(c.Param("start_date"))
-	endDate, _ := strconv.Atoi(c.Param("end_date"))
-	hostName := c.Param("hostname")
+	startDate, _ := strconv.Atoi(c.Query("start_date"))
+	endDate, _ := strconv.Atoi(c.Query("end_date"))
+	hostName := c.Query("hostname")
 
-	betweenDates := common.GetBetweenDays(startDate, endDate)
+	betweenDates := common.GetBetweenDays(startDate, endDate, false)
 	result := orm.QueryHost(db, betweenDates, hostName)
 	c.JSON(200, result)
 }

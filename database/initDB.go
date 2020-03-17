@@ -4,11 +4,9 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
-	"os"
 )
 
-func Initialize() (*gorm.DB, error) {
-	dbConfig := os.Getenv("DB_CONFIG")
+func Initialize(dbConfig string) (*gorm.DB, error) {
 	db, err := gorm.Open("mysql", dbConfig)
 	if err != nil {
 		panic(err)
