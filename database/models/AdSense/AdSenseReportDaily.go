@@ -26,3 +26,8 @@ type AdSenseRevenue struct {
 	AccountId string `gorm:"type:varchar(45);column:account_id;"`
 	CustomerAdExchangeEstimatedRevenue float64 `gorm:"type:double;column:customer_ad_exchange_estimated_revenue;"`
 }
+
+type AdSenseDomain struct {
+	AccountId string `gorm:"type:varchar(45);column:account_id;"`
+	DomainName string `gorm:"type:varchar(256);column:domain_name;"`
+}

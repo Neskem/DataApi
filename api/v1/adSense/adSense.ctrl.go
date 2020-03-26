@@ -47,5 +47,10 @@ func ReadDailyAdSenseRevenue(c *gin.Context) {
 }
 
 func GetAdSenseDomains(c *gin.Context) {
-
+	db := c.MustGet("db").(*gorm.DB)
+	result := orm.QueryAdSenseDomainList(db)
+	c.JSON(200, common.JSON{
+		"status": true,
+		"data": result,
+	})
 }
