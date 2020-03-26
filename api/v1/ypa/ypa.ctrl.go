@@ -40,9 +40,6 @@ func PostAllotting(c *gin.Context) {
 		return
 	}
 
-
-
-
 	startDate, _ := strconv.Atoi(c.Query("start_date"))
 	endDate, _ := strconv.Atoi(c.Query("end_date"))
 

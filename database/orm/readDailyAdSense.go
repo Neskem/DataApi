@@ -49,9 +49,9 @@ func QueryAdSenseReport(db *gorm.DB, accountId string, startDate string, endDate
 	return rowsList
 }
 
-func QueryAdSenseRevenue(db *gorm.DB, accountId string, startDate string, endDate string) []common.JSON {
+func QueryAdSenseRevenue(db *gorm.DB, accountId []string, startDate string, endDate string) []common.JSON {
 	table := "adsense_report_daily"
-	rows, err := db.Table(table).Model(&AdSenseRevenue{}).Select("account_id, sum(customer_ad_exchange_estimated_revenue) as customer_ad_exchange_estimated_revenue").Where("account_id = ? AND date BETWEEN ? AND ?", accountId, startDate, endDate).Group("account_id").Rows()
+	rows, err := db.Table(table).Model(&AdSenseRevenue{}).Select("account_id, SUM(customer_ad_exchange_estimated_revenue) AS customer_ad_exchange_estimated_revenue").Where("account_id IN (?) AND date BETWEEN ? AND ?", accountId, startDate, endDate).Group("account_id").Rows()
 	var rowsList []common.JSON
 	if err != nil {
 		fmt.Println(err)
@@ -123,31 +123,8 @@ func QueryAdSenseReportList(db *gorm.DB, accountId []string, startDate int, endD
 }
 
 func QueryAdSenseRevenueList(db *gorm.DB, accountId []string, startDate int, endDate int) []common.JSON{
-	result := make(chan []common.JSON)
-	wg := sync.WaitGroup{}
-	wg.Add(len(accountId))
-	for _, id := range accountId {
-		go func(result chan<- []common.JSON) {
-			defer wg.Done()
-			reportList := QueryAdSenseRevenue(db, id, common.ConvertTime(startDate), common.ConvertTime(endDate))
-			result <- reportList
-		}(result)
-	}
-
-	go func(){
-		wg.Wait()
-		close(result)
-	}()
-	var response []common.JSON
-
-	index := 0
-	for n := range result {
-		for _, s := range n {
-			response = append(response, s)
-		}
-		index = index + 1
-	}
-	return response
+	reportList := QueryAdSenseRevenue(db, accountId, common.ConvertTime(startDate), common.ConvertTime(endDate))
+	return reportList
 }
 
 func QueryAdSenseDomainList(db *gorm.DB) map[string][]string {
