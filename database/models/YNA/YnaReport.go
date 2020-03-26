@@ -6,8 +6,8 @@ import (
 )
 type YnaReprot struct {
 	ID        uint `gorm:"primary_key"`
-	Date int `gorm:"type:int(11);"`
-	AdUnit_id int `gorm:"type:int(11);"`
+	Date int `gorm:"type:int(11);column:date;"`
+	AdUnitId int `gorm:"type:int(11);column:adunit_id;"`
 	Impressions int `gorm:"type:int(11);"`
 	Clicks int `gorm:"type:int(11);"`
 	Revenuennusd float64 `gorm:"type:double;column:revenueInUSD;"`
@@ -21,7 +21,7 @@ type YnaReprot struct {
 func (y *YnaReprot) Serialize() common.JSON {
 	return common.JSON{
 		"id":     y.ID,
-		"adunit_id": y.AdUnit_id,
+		"adunit_id": y.AdUnitId,
 		"impressions": y.Impressions,
 		"clicks": y.Clicks,
 		"revenueintwd": y.Revenueintwd,
@@ -31,7 +31,7 @@ func (y *YnaReprot) Serialize() common.JSON {
 
 func (y *YnaReprot) Read(m common.JSON) {
 	y.ID = uint(m["id"].(float64))
-	y.AdUnit_id = m["adunit_id"].(int)
+	y.AdUnitId = m["adunit_id"].(int)
 	y.Impressions = m["impressions"].(int)
 	y.Clicks = m["clicks"].(int)
 	y.Revenueintwd = m["revenueintwd"].(float64)

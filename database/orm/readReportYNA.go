@@ -5,8 +5,6 @@ import (
 	"DataApi.Go/lib/common"
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"strconv"
-	"sync"
 )
 
 type YnaReport = YNA.YnaReprot
@@ -26,30 +24,36 @@ func QueryYnaReport(db *gorm.DB, adUnitId int, date int) common.JSON {
 	}
 }
 
-func QueryYnaReportList(db *gorm.DB, betweenDate []string, adUnitIds []int) []common.JSON {
-	result := make(chan common.JSON)
-	wg := sync.WaitGroup{}
-	wg.Add(len(adUnitIds))
-	for _, id := range adUnitIds {
-		go func(result chan<- common.JSON) {
-			defer wg.Done()
-			for _, date := range betweenDate {
-				dateTime, _ := strconv.Atoi(date)
-				revenue := QueryYnaReport(db, id, dateTime)
-				result <- revenue
-			}
-		}(result)
+func QueryYnaReportFix(db *gorm.DB, adUnitId []int, startDate int, endDate int) []common.JSON {
+	table := "yna_report"
+	var ynaReport YnaReport
+	rows, err := db.Table(table).Model(&ynaReport).Where("adunit_id IN (?) and date BETWEEN ? AND ?", adUnitId, startDate, endDate).Rows()
+	if err != nil {
+		fmt.Println(err)
+		return nil
 	}
-	go func(){
-		wg.Wait()
-		close(result)
-	}()
-	var response []common.JSON
+	defer rows.Close()
+	var rowsList []common.JSON
+	for rows.Next() {
+		var ynaReport YnaReport
+		err := db.ScanRows(rows, &ynaReport)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		rowsList = append(rowsList, common.JSON{
+			"date": ynaReport.Date,
+			"adunit_id": ynaReport.AdUnitId,
+			"impressions": ynaReport.Impressions,
+			"clicks": ynaReport.Clicks,
+			"revenueInTWD": ynaReport.Revenueintwd,
+			"customerRevenueInTWD": ynaReport.Customerrevenueintwd,
+		})
+	}
+	return rowsList
+}
 
-	index := 0
-	for n := range result {
-		response = append(response, n)
-		index = index + 1
-	}
-	return response
+func QueryYnaReportList(db *gorm.DB, StartDate int, EndDate int, adUnitIds []int) []common.JSON {
+	result := QueryYnaReportFix(db, adUnitIds, StartDate, EndDate)
+	return result
 }

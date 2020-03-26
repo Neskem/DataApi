@@ -22,8 +22,8 @@ func PostYNAReport(c *gin.Context) {
 		c.AbortWithStatus(400)
 		return
 	}
-	betweenDates := common.GetBetweenDays(requestBody.StartDate, requestBody.EndDate, false)
-	result := orm.QueryYnaReportList(db, betweenDates, requestBody.Adunit_ids)
+	//betweenDates := common.GetBetweenDays(requestBody.StartDate, requestBody.EndDate, false)
+	result := orm.QueryYnaReportList(db, requestBody.StartDate, requestBody.EndDate, requestBody.Adunit_ids)
 	response := common.JSON{
 		"status": true,
 		"data": result,
