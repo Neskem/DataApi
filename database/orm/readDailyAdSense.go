@@ -6,16 +6,15 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"strings"
-	"sync"
 )
 
 type AdSenseReportDaily = AdSense.AdSenseReportDaily
 type AdSenseRevenue = AdSense.AdSenseRevenue
 type AdSenseDomain = AdSense.AdSenseDomain
 
-func QueryAdSenseReport(db *gorm.DB, accountId string, startDate string, endDate string) []common.JSON {
+func QueryAdSenseReport(db *gorm.DB, accountId []string, startDate string, endDate string) []common.JSON {
 	table := "adsense_report_daily"
-	rows, err := db.Table(table).Model(&AdSenseReportDaily{}).Where("account_id = ? AND date BETWEEN ? AND ?", accountId, startDate, endDate).Rows()
+	rows, err := db.Table(table).Model(&AdSenseReportDaily{}).Where("ad_client_id IN (?) AND date BETWEEN ? AND ?", accountId, startDate, endDate).Rows()
 	var rowsList []common.JSON
 	if err != nil {
 		fmt.Println(err)
@@ -28,7 +27,7 @@ func QueryAdSenseReport(db *gorm.DB, accountId string, startDate string, endDate
 			fmt.Println(err)
 		}
 		rowsList = append(rowsList, common.JSON{
-			"account_id": adSenseReportDaily.AccountId,
+			"account_id": strings.Replace(adSenseReportDaily.AdClientId, "ca-", "", -1),
 			"ad_client_id": adSenseReportDaily.AdClientId,
 			"ad_exchange_clicks": adSenseReportDaily.AdExchangeClicks,
 			"ad_exchange_impression_rpm": adSenseReportDaily.AdExchangeImpressionRpm,
@@ -74,7 +73,7 @@ func QueryAdSenseRevenue(db *gorm.DB, accountId []string, startDate string, endD
 
 func QueryAdSenseDomain(db *gorm.DB) map[string][]string {
 	table := "adsense_report_daily"
-	rows, err := db.Table(table).Model(&AdSenseDomain{}).Select("account_id, GROUP_CONCAT(distinct domain_name) as domain_name").Where("account_id is not null and domain_name is not null").Group("account_id").Order("account_Id").Rows()
+	rows, err := db.Table(table).Model(&AdSenseDomain{}).Select("ad_client_id, GROUP_CONCAT(distinct domain_name) as domain_name").Where("domain_name is not null and domain_name != ?", "webcaches").Group("ad_client_id").Order("ad_client_id").Rows()
 	if err != nil {
 		fmt.Println(err)
 		return nil
@@ -89,37 +88,16 @@ func QueryAdSenseDomain(db *gorm.DB) map[string][]string {
 			return nil
 		}
 		domainSlice := strings.Split(adSenseDomain.DomainName, ",")
-		rowsMap[adSenseDomain.AccountId] = domainSlice
+		accountId := strings.Replace(adSenseDomain.AdClientId, "ca-", "", -1)
+		rowsMap[accountId] = domainSlice
 	}
 	return rowsMap
 }
 
 func QueryAdSenseReportList(db *gorm.DB, accountId []string, startDate int, endDate int) []common.JSON{
-	result := make(chan []common.JSON)
-	wg := sync.WaitGroup{}
-	wg.Add(len(accountId))
-	for _, id := range accountId {
-		go func(result chan<- []common.JSON) {
-			defer wg.Done()
-			reportList := QueryAdSenseReport(db, id, common.ConvertTime(startDate), common.ConvertTime(endDate))
-			result <- reportList
-		}(result)
-	}
-
-	go func(){
-		wg.Wait()
-		close(result)
-	}()
-	var response []common.JSON
-
-	index := 0
-	for n := range result {
-		for _, s := range n {
-			response = append(response, s)
-		}
-		index = index + 1
-	}
-	return response
+	caAccountId := common.GetCaAccountIds(accountId)
+	reportList := QueryAdSenseReport(db, caAccountId, common.ConvertTime(startDate), common.ConvertTime(endDate))
+	return reportList
 }
 
 func QueryAdSenseRevenueList(db *gorm.DB, accountId []string, startDate int, endDate int) []common.JSON{
