@@ -25,7 +25,7 @@ func GetBetweenDays(startDate int, endDate int, convertDate bool) []string {
 
 	between := int(finalDay.Sub(currentDay).Hours() / 24)
 	if convertDate == true {
-		betweenDays = append(betweenDays, convertTime(startDate))
+		betweenDays = append(betweenDays, ConvertTime(startDate))
 	} else {
 		betweenDays = append(betweenDays, strconv.Itoa(startDate))
 	}
@@ -88,7 +88,7 @@ func GetPageID(unParsedUrl string) string {
 	return hex.EncodeToString(hashCode.Sum(nil))
 }
 
-func convertTime(date int) string {
+func ConvertTime(date int) string {
 	year := date / 1e4
 	month := (date % 1e4) / 1e2
 	day := date % 1e2
@@ -106,4 +106,16 @@ func convertTime(date int) string {
 		d = strconv.Itoa(day)
 	}
 	return strconv.Itoa(year) + "-" + m + "-" + d
+}
+
+func Unique(stringSlice []string) []string {
+	keys := make(map[string]bool)
+	var list []string
+	for _, entry := range stringSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }

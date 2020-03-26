@@ -1,7 +1,7 @@
 package main
 
 import (
-	"DataApi.Go/api"
+	v1 "DataApi.Go/api/v1"
 	"DataApi.Go/database"
 	"DataApi.Go/middleware"
 	"github.com/gin-gonic/gin"
@@ -27,7 +27,7 @@ func main() {
 			"message": "hello " + name,
 		})
 	})
-	api.ApplyRoutes(app) // apply api router
+	v1.ApplyRoutes(app) // apply api router
 	err2 := app.Run(":" + port)
 	if err2 != nil {
 		panic(err2)

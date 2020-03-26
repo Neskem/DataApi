@@ -8,6 +8,7 @@ import (
 func ApplyRoutes(r *gin.RouterGroup) {
 	posts := r.Group("/ypa")
 	{
-		posts.GET("/daily", getDailyYPA)
+		posts.GET("/daily", GetDailyYPA)
+		posts.POST("/allotting", PostAllotting)
 	}
 }

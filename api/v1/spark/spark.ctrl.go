@@ -1,7 +1,6 @@
 package spark
 
 import (
-	"DataApi.Go/database/models"
 	"DataApi.Go/database/models/PV"
 	"DataApi.Go/database/orm"
 	"DataApi.Go/lib/common"
@@ -12,48 +11,8 @@ import (
 )
 
 type StatPagePV = PV.StatPagePV
-type Post = models.Post
 
-func create(c *gin.Context) {
-	db := c.MustGet("db").(*gorm.DB)
-	type RequestBody struct {
-		Url string `json:"url" binding:"required"`
-		Pv int `json:"pv" binding:"required"`
-	}
-	var requestBody RequestBody
-	if err := c.BindJSON(&requestBody); err != nil {
-		fmt.Println(err)
-		c.AbortWithStatus(400)
-		return
-	}
-
-	stat := StatPagePV{Page_url: requestBody.Url, Pv: requestBody.Pv}
-	db.NewRecord(stat)
-	db.Create(&stat)
-	c.JSON(200, stat.Serialize())
-}
-
-func read(c *gin.Context)  {
-	db := c.MustGet("db").(*gorm.DB)
-	type RequestBody struct {
-		Url string `json:"url" binding:"required"`
-	}
-	var requestBody RequestBody
-	if err := c.BindJSON(&requestBody); err != nil {
-		fmt.Println(err)
-		c.AbortWithStatus(400)
-		return
-	}
-	var stat StatPagePV
-	if err := db.Set("gorm:auto_preload", true).Where("page_url = ?", requestBody.Url).First(&stat).Error; err != nil {
-		c.AbortWithStatus(404)
-		return
-	}
-
-	c.JSON(200, stat.Serialize())
-}
-
-func readDailyPV(c *gin.Context) {
+func ReadDailyPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	type RequestBody struct {
@@ -75,7 +34,7 @@ func readDailyPV(c *gin.Context) {
 
 }
 
-func readMonthlyPV(c *gin.Context) {
+func ReadMonthlyPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	type RequestBody struct {
@@ -94,7 +53,7 @@ func readMonthlyPV(c *gin.Context) {
 
 }
 
-func readTotalPV(c *gin.Context) {
+func ReadTotalPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	type RequestBody struct {
@@ -112,7 +71,7 @@ func readTotalPV(c *gin.Context) {
 
 }
 
-func getAuthorPV(c *gin.Context) {
+func GetAuthorPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 	startDate, _ := strconv.Atoi(c.Query("start_date"))
 	endDate, _ := strconv.Atoi(c.Query("end_date"))
@@ -124,7 +83,7 @@ func getAuthorPV(c *gin.Context) {
 
 }
 
-func getHostPV(c *gin.Context) {
+func GetHostPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 	startDate, _ := strconv.Atoi(c.Query("start_date"))
 	endDate, _ := strconv.Atoi(c.Query("end_date"))
