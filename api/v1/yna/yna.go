@@ -1,4 +1,4 @@
-package ypa
+package yna
 
 import (
 	"github.com/gin-gonic/gin"
@@ -6,9 +6,8 @@ import (
 
 // ApplyRoutes applies router to the gin Engine
 func ApplyRoutes(r *gin.RouterGroup) {
-	posts := r.Group("/ypa")
+	posts := r.Group("/yna")
 	{
-		posts.GET("/daily", GetDailyYPA)
-		posts.POST("/allotting", PostAllotting)
+		posts.POST("/yna_by_adunit", PostYNAReport)
 	}
 }

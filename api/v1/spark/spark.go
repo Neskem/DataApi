@@ -8,10 +8,10 @@ import (
 func ApplyRoutes(r *gin.RouterGroup) {
 	posts := r.Group("/spark")
 	{
-		posts.POST("/pv_by_urls", readDailyPV)
-		posts.POST("/pv_monthly_by_urls", readMonthlyPV)
-		posts.POST("total_pv_by_urls", readTotalPV)
-		posts.GET("/pv_by_author", getAuthorPV)
-		posts.GET("/pv_by_hostname", getHostPV)
+		posts.POST("/pv_by_urls", ReadDailyPV)
+		posts.POST("/pv_monthly_by_urls", ReadMonthlyPV)
+		posts.POST("total_pv_by_urls", ReadTotalPV)
+		posts.GET("/pv_by_author", GetAuthorPV)
+		posts.GET("/pv_by_hostname", GetHostPV)
 	}
 }
