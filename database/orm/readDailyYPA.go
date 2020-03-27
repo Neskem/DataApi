@@ -5,7 +5,6 @@ import (
 	"DataApi.Go/lib/common"
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"strings"
 )
 
 type YpaReportDaily = YPA.YpaReportDaily
@@ -17,25 +16,31 @@ func QueryDailyYpa(db *gorm.DB, date string) float64 {
 	return ypaReportDaily.Revenue
 }
 
-func QueryDailyYpaList(db *gorm.DB, betweenDate []string) []common.JSON {
-	result := make(chan float64)
-	go func() {
-		for _, date := range betweenDate {
-			revenue := QueryDailyYpa(db, date)
-			fmt.Println("revenue: ", revenue)
-			result <- revenue
-		}
-		close(result)
-	}()
-	var response []common.JSON
-
-	index := 0
-	for n := range result {
-		response = append(response, common.JSON{
-			"date": strings.Trim(betweenDate[index], "-"),
-			"revenue": n,
-		})
-		index = index + 1
+func QueryBetweenDailyYpa(db *gorm.DB, startDate int, endDate int) []common.JSON {
+	table := "ypa_report_daily"
+	var ypaReportDaily YpaReportDaily
+	rows, err := db.Table(table).Model(&ypaReportDaily).Where("date BETWEEN ? AND ?", startDate, endDate).Rows()
+	if err != nil {
+		fmt.Println(err)
 	}
+	defer rows.Close()
+	var rowsList []common.JSON
+	for rows.Next() {
+		var ypaReportDaily YpaReportDaily
+		err := db.ScanRows(rows, &ypaReportDaily)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		rowsList = append(rowsList, common.JSON{
+			"date": ypaReportDaily.Date,
+			"revenue": ypaReportDaily.Revenue,
+		})
+	}
+	return rowsList
+}
+
+func QueryDailyYpaList(db *gorm.DB, startDate int, endDate int) []common.JSON {
+	response := QueryBetweenDailyYpa(db, startDate, endDate)
 	return response
 }

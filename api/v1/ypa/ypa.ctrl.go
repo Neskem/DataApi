@@ -15,9 +15,7 @@ func GetDailyYPA(c *gin.Context) {
 	startDate, _ := strconv.Atoi(c.Query("start_date"))
 	endDate, _ := strconv.Atoi(c.Query("end_date"))
 
-	betweenDates := common.GetBetweenDays(startDate, endDate, true)
-
-	result := orm.QueryDailyYpaList(db, betweenDates)
+	result := orm.QueryDailyYpaList(db, startDate, endDate)
 	response := common.JSON{
 		"status": true,
 		"data": result,
@@ -43,9 +41,9 @@ func PostAllotting(c *gin.Context) {
 	startDate, _ := strconv.Atoi(c.Query("start_date"))
 	endDate, _ := strconv.Atoi(c.Query("end_date"))
 
-	betweenDates := common.GetBetweenDays(startDate, endDate, true)
+	//betweenDates := common.GetBetweenDays(startDate, endDate, true)
 
-	result := orm.QueryDailyYpaList(db, betweenDates)
+	result := orm.QueryDailyYpaList(db, startDate, endDate)
 	response := common.JSON{
 		"status": true,
 		"data": result,
