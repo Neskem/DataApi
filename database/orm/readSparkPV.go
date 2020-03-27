@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
+	"sync"
 )
 
 type StatPagePV = PV.StatPagePV
@@ -88,6 +89,13 @@ func QuerySparkPVByHost(db *gorm.DB, betweenDate []string, hostName string) int 
 	return result
 }
 
+func QueryPvValidByHost(db *gorm.DB, date string, hostName string) int {
+	table := common.GetSparkPVTableName(date)
+	var sum SumPV
+	db.Table(table).Select("sum(pv_valid) as total").Where("page_hostname= ?", hostName).Scan(&sum)
+	return sum.Total
+}
+
 func QueryUrlList(db *gorm.DB, betweenDate []string, urls []string) []common.JSON{
 	result := make(chan int)
 	go func() {
@@ -136,4 +144,28 @@ func QueryHost(db *gorm.DB, betweenDate []string, hostName string) common.JSON{
 		},
 	}
 	return response
+}
+
+
+func QueryAllPvByHost(db *gorm.DB, betweenDate []string, hostName string) int{
+	result := make(chan int)
+	wg := sync.WaitGroup{}
+	wg.Add(len(betweenDate))
+	for _, date := range betweenDate {
+		fmt.Println(date)
+		go func(date string) {
+			defer wg.Done()
+			pv := QueryPvValidByHost(db, date, hostName)
+			result <- pv
+		}(date)
+	}
+	go func() {
+		wg.Wait()
+		close(result)
+	}()
+	var totalPv int
+	for pv := range result {
+		totalPv = totalPv + pv
+	}
+	return totalPv
 }
