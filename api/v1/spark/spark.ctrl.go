@@ -4,6 +4,7 @@ import (
 	"DataApi.Go/database/models/PV"
 	"DataApi.Go/database/orm"
 	"DataApi.Go/lib/common"
+	"DataApi.Go/task"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -29,8 +30,11 @@ func ReadDailyPV(c *gin.Context) {
 
 	betweenDates := common.GetBetweenDays(requestBody.StartDate, requestBody.EndDate, false)
 
-	result := orm.QueryUrlList(db, betweenDates, requestBody.Urls)
-	c.JSON(200, result)
+	result := orm.QueryUrlPvList2(db, betweenDates, requestBody.Urls)
+	c.JSON(200, common.JSON{
+		"status": true,
+		"data": result,
+	})
 
 }
 
@@ -83,12 +87,36 @@ func GetAuthorPV(c *gin.Context) {
 	startDate, _ := strconv.Atoi(c.Query("start_date"))
 	endDate, _ := strconv.Atoi(c.Query("end_date"))
 	author := c.Query("author")
+	hostName := c.Query("hostname")
+	if hostName == ""{
+		hostName = "zi.media"
+	}
 
 	betweenDates := common.GetBetweenDays(startDate, endDate, false)
-	result := orm.QueryAuthor(db, betweenDates, author)
+	pv := task.GetPvListByAuthor(db, betweenDates, author, hostName)
+	result := common.JSON{
+		"status": true,
+		"data": common.JSON{
+			"start_date": startDate,
+			"end_date":   endDate,
+			"author":   author,
+			"hostname": hostName,
+			"pv_valid":   pv,
+		},
+	}
 	c.JSON(200, result)
-
 }
+
+//func GetHostPV(c *gin.Context) {
+//	db := c.MustGet("db").(*gorm.DB)
+//	startDate, _ := strconv.Atoi(c.Query("start_date"))
+//	endDate, _ := strconv.Atoi(c.Query("end_date"))
+//	hostName := c.Query("hostname")
+//
+//	betweenDates := common.GetBetweenDays(startDate, endDate, false)
+//	result := orm.QueryHost(db, betweenDates, hostName)
+//	c.JSON(200, result)
+//}
 
 func GetHostPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
@@ -97,18 +125,7 @@ func GetHostPV(c *gin.Context) {
 	hostName := c.Query("hostname")
 
 	betweenDates := common.GetBetweenDays(startDate, endDate, false)
-	result := orm.QueryHost(db, betweenDates, hostName)
-	c.JSON(200, result)
-}
-
-func GetHostPV2(c *gin.Context) {
-	db := c.MustGet("db").(*gorm.DB)
-	startDate, _ := strconv.Atoi(c.Query("start_date"))
-	endDate, _ := strconv.Atoi(c.Query("end_date"))
-	hostName := c.Query("hostname")
-
-	betweenDates := common.GetBetweenDays(startDate, endDate, false)
-	pv := orm.QueryAllPvByHost(db, betweenDates, hostName)
+	pv := task.GetPvListByFunction(db, betweenDates, hostName, orm.QueryPvValidByHost)
 	result := common.JSON{
 		"status": true,
 		"data": common.JSON{
