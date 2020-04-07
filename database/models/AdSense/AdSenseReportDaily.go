@@ -13,7 +13,7 @@ type AdSenseReportDaily struct {
 	PageRpm float64 `gorm:"type:double;column:page_rpm;"`
 	ImpressionRpm float64 `gorm:"type:double;column:impression_rpm;"`
 	AccountId string `gorm:"type:varchar(45);column:account_id;"`
-	NetworkCode uint64 `gorm:"type:bigint(20);column:network_code;"`
+	NetworkCode string `gorm:"type:bigint(20);column:network_code;"`
 	AdExchangeImpressions int `gorm:"type:int(11);column:ad_exchange_impressions;"`
 	AdExchangeClicks int `gorm:"type:int(11);column:ad_exchange_clicks;"`
 	AdExchangeEstimatedRevenue float64 `gorm:"type:double;column:ad_exchange_estimated_revenue;"`
@@ -28,6 +28,6 @@ type AdSenseRevenue struct {
 }
 
 type AdSenseDomain struct {
-	AccountId string `gorm:"type:varchar(45);column:account_id;"`
+	AdClientId string `gorm:"type:varchar(45);column:ad_client_id;"`
 	DomainName string `gorm:"type:varchar(256);column:domain_name;"`
 }

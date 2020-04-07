@@ -1,8 +1,8 @@
 package ypa
 
 import (
-	"DataApi.Go/database/orm"
 	"DataApi.Go/lib/common"
+	"DataApi.Go/task"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -15,9 +15,7 @@ func GetDailyYPA(c *gin.Context) {
 	startDate, _ := strconv.Atoi(c.Query("start_date"))
 	endDate, _ := strconv.Atoi(c.Query("end_date"))
 
-	betweenDates := common.GetBetweenDays(startDate, endDate, true)
-
-	result := orm.QueryDailyYpaList(db, betweenDates)
+	result := task.QueryDailyYpaList(db, startDate, endDate)
 	response := common.JSON{
 		"status": true,
 		"data": result,
@@ -40,15 +38,10 @@ func PostAllotting(c *gin.Context) {
 		return
 	}
 
-
-
-
 	startDate, _ := strconv.Atoi(c.Query("start_date"))
 	endDate, _ := strconv.Atoi(c.Query("end_date"))
 
-	betweenDates := common.GetBetweenDays(startDate, endDate, true)
-
-	result := orm.QueryDailyYpaList(db, betweenDates)
+	result := task.QueryDailyYpaList(db, startDate, endDate)
 	response := common.JSON{
 		"status": true,
 		"data": result,
