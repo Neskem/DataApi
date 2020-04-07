@@ -5,7 +5,6 @@ import (
 	"DataApi.Go/lib/common"
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"strconv"
 )
 
 type StatPagePV = PV.StatPagePV
@@ -35,8 +34,7 @@ func SelectPvList(db *gorm.DB, date string, pageIds []string) map[string]int {
 	return rowsMap
 }
 
-var GlobalRows map[string]map[string]map[string]string
-func SelectPvDataByPageId(db *gorm.DB, date string, pageIds []string) map[string]map[string]string{
+func SelectPvDataByPageId(db *gorm.DB, date string, pageIds []string, globalRows map[string]map[string]map[string]int) map[string]map[string]map[string]int{
 	table := common.GetSparkPVTableName(date)
 	rows, err := db.Table(table).Model(&StatPagePV{}).Select("*").Where(
 		"page_id IN (?)", pageIds).Rows()
@@ -45,7 +43,7 @@ func SelectPvDataByPageId(db *gorm.DB, date string, pageIds []string) map[string
 		return nil
 	}
 	defer rows.Close()
-	rowsMap := make(map[string]map[string]string)
+	rowsMap := make(map[string]map[string]int)
 	for rows.Next() {
 		var statPagePV StatPagePV
 		err := db.ScanRows(rows, &statPagePV)
@@ -55,21 +53,33 @@ func SelectPvDataByPageId(db *gorm.DB, date string, pageIds []string) map[string
 		}
 		inner, ok := rowsMap[statPagePV.PageId]
 		if !ok {
-			inner = make(map[string]string)
-			inner["page_url"] = statPagePV.PageUrl
-			inner["pv"] = strconv.Itoa(statPagePV.Pv)
-			inner["pv_valid"] = strconv.Itoa(statPagePV.PvValid)
-			inner["pv_invalid"] = strconv.Itoa(statPagePV.PvInvalid)
-			inner["pv_count"] = strconv.Itoa(statPagePV.PvCount)
-			inner["stay_0_count"] = strconv.Itoa(statPagePV.Stay0Count)
-			inner["stay_1_count"] = strconv.Itoa(statPagePV.Stay1Count)
+			inner = make(map[string]int)
+			inner["pv"] = statPagePV.Pv
+			inner["pv_valid"] = statPagePV.PvValid
+			inner["pv_invalid"] = statPagePV.PvInvalid
+			inner["pv_count"] = statPagePV.PvCount
+			inner["stay_0_count"] = statPagePV.Stay0Count
+			inner["stay_1_count"] = statPagePV.Stay1Count
 			rowsMap[statPagePV.PageId] = inner
 		}
 	}
 	if len(rowsMap) > 0 {
-		GlobalRows[date] = rowsMap
+		globalRows[date] = rowsMap
 	}
-	return rowsMap
+	return globalRows
+}
+
+func UpdatePvDataByPageId(db *gorm.DB, date string, pageId string, pvData map[string]int) {
+	table := common.GetSparkPVTableName(date)
+	db.Table(table).Model(&StatPagePV{}).Where("page_id = ?", pageId).Updates(
+		map[string]interface{}{
+			"pv": pvData["pv"],
+			"pv_count": pvData["pv_count"],
+			"pv_valid": pvData["pv_valid"],
+			"pv_invalid": pvData["pv_invalid"],
+			"stay_0_count": pvData["stay_0_count"],
+			"stay_1_count": pvData["stay_1_count"],
+		})
 }
 
 func SelectPvByHost(db *gorm.DB, date string, hostName string) int {

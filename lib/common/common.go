@@ -127,3 +127,7 @@ func GetCaAccountIds(accountIds []string) []string{
 	}
 	return caAccountIds
 }
+
+func GetZiUrl(author string, articleId string) string{
+	return "https://zi.media/" + "@" + author + "/" + "post" + "/" + articleId
+}

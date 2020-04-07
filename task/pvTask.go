@@ -3,7 +3,6 @@ package task
 import (
 	"DataApi.Go/database/orm"
 	"DataApi.Go/lib/common"
-	"fmt"
 	"github.com/jinzhu/gorm"
 	"sync"
 )
@@ -98,22 +97,23 @@ func QueryDailyPvList(db *gorm.DB, betweenDate []string, urls []string) map[stri
 }
 
 func MoveDailyPv(db *gorm.DB, author string, betweenDate []string, mappings []map[string]string) bool {
-	//result := make(chan map[string]common.JSON, len(betweenDate))
 	var mutex sync.Mutex
-	var pageIdMappings []map[string]string
 	var pageIdsArray []string
-	orm.GlobalRows = make(map[string]map[string]map[string]string)
+	var globalRows map[string]map[string]map[string]int
+	globalRows = make(map[string]map[string]map[string]int)
+	var mappingMap map[string]string
+	mappingMap = make(map[string]string)
 	for _, mapping := range mappings {
-		newUrl := "https://zi.media/" + "@" + author + "/" + "post" + "/" + mapping["new"]
+		newUrl := common.GetZiUrl(author, mapping["new"])
 		newPageId := common.GetPageID(newUrl)
-		oldUrl := "https://zi.media/" + "@" + author + "/" + "post" + "/" + mapping["old"]
+		oldUrl := common.GetZiUrl(author, mapping["old"])
 		oldPageId := common.GetPageID(oldUrl)
 		pageIdMapping := make(map[string]string)
 		pageIdMapping["old"] = oldPageId
 		pageIdMapping["new"] = newPageId
+		mappingMap[newPageId] = oldPageId
 		pageIdsArray = append(pageIdsArray, oldPageId)
 		pageIdsArray = append(pageIdsArray, newPageId)
-		pageIdMappings = append(pageIdMappings, pageIdMapping)
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(len(betweenDate))
@@ -121,24 +121,53 @@ func MoveDailyPv(db *gorm.DB, author string, betweenDate []string, mappings []ma
 		go func(date string) {
 			defer wg.Done()
 			mutex.Lock()
-			orm.SelectPvDataByPageId(db, date, pageIdsArray)
-			//result <- pvData
+			globalRows = orm.SelectPvDataByPageId(db, date, pageIdsArray, globalRows)
 			mutex.Unlock()
 		}(date)
 	}
+
 	go func() {
 		wg.Wait()
-		//close(result)
-		for date, pageIdMap := range orm.GlobalRows {
-			fmt.Println(date)
-			for pageId, dataMap := range pageIdMap {
-				fmt.Println(pageId )
-				for key, value := range dataMap {
-					fmt.Println(key, ": ", value)
-				}
+		globalRows = MoveDailyPvFunc(globalRows, mappingMap)
+		updateDailyPvFunc(db, globalRows)
+	}()
+	return true
+}
+
+func MoveDailyPvFunc(rows map[string]map[string]map[string]int, mappingMap map[string]string)map[string]map[string]map[string]int{
+	for date, pageIdMap := range rows {
+		for pageId := range pageIdMap {
+			oldPageId, ok := mappingMap[pageId]
+			if ok {
+				rows[date][pageId]["pv"] = rows[date][pageId]["pv"] + rows[date][oldPageId]["pv"]
+				rows[date][pageId]["pv_valid"] = rows[date][pageId]["pv_valid"] + rows[date][oldPageId]["pv_valid"]
+				rows[date][pageId]["pv_invalid"] = rows[date][pageId]["pv_invalid"] + rows[date][oldPageId]["pv_invalid"]
+				rows[date][pageId]["pv_count"] = rows[date][pageId]["pv_count"] + rows[date][oldPageId]["pv_count"]
+				rows[date][pageId]["stay_0_count"] = rows[date][pageId]["stay_0_count"] + rows[date][oldPageId]["stay_0_count"]
+				rows[date][pageId]["stay_1_count"] = rows[date][pageId]["stay_1_count"] + rows[date][oldPageId]["stay_1_count"]
+
+				rows[date][oldPageId]["pv"] = 0
+				rows[date][oldPageId]["pv_valid"] = 0
+				rows[date][oldPageId]["pv_invalid"] = 0
+				rows[date][oldPageId]["pv_count"] = 0
+				rows[date][oldPageId]["stay_0_count"] = 0
+				rows[date][oldPageId]["stay_1_count"]= 0
 			}
 		}
-	}()
+	}
+	return rows
+}
 
-	return true
+func updateDailyPvFunc(db *gorm.DB, rows map[string]map[string]map[string]int) {
+	for date, pageIdMap := range rows {
+		wg := sync.WaitGroup{}
+		wg.Add(len(pageIdMap))
+		for pageId, dataMap := range pageIdMap {
+			go func(db *gorm.DB, date string, pageId string, dataMap map[string]int) {
+				defer wg.Done()
+				orm.UpdatePvDataByPageId(db, date, pageId, dataMap)
+			}(db, date, pageId, dataMap)
+		}
+		wg.Wait()
+	}
 }
