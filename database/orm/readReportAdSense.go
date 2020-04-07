@@ -12,7 +12,7 @@ type AdSenseReportDaily = AdSense.AdSenseReportDaily
 type AdSenseRevenue = AdSense.AdSenseRevenue
 type AdSenseDomain = AdSense.AdSenseDomain
 
-func QueryAdSenseReport(db *gorm.DB, accountId []string, startDate string, endDate string) []common.JSON {
+func SelectAdSenseReport(db *gorm.DB, accountId []string, startDate string, endDate string) []common.JSON {
 	table := "adsense_report_daily"
 	rows, err := db.Table(table).Model(&AdSenseReportDaily{}).Where("ad_client_id IN (?) AND date BETWEEN ? AND ?", accountId, startDate, endDate).Rows()
 	var rowsList []common.JSON
@@ -44,11 +44,10 @@ func QueryAdSenseReport(db *gorm.DB, accountId []string, startDate string, endDa
 			"page_views": adSenseReportDaily.PageViews,
 		})
 	}
-	fmt.Println(rowsList)
 	return rowsList
 }
 
-func QueryAdSenseRevenue(db *gorm.DB, accountId []string, startDate string, endDate string) []common.JSON {
+func SelectAdSenseRevenue(db *gorm.DB, accountId []string, startDate string, endDate string) []common.JSON {
 	table := "adsense_report_daily"
 	rows, err := db.Table(table).Model(&AdSenseRevenue{}).Select("account_id, SUM(customer_ad_exchange_estimated_revenue) AS customer_ad_exchange_estimated_revenue").Where("account_id IN (?) AND date BETWEEN ? AND ?", accountId, startDate, endDate).Group("account_id").Rows()
 	var rowsList []common.JSON
@@ -67,13 +66,12 @@ func QueryAdSenseRevenue(db *gorm.DB, accountId []string, startDate string, endD
 			"customer_ad_exchange_estimated_revenue": adSenseRevenue.CustomerAdExchangeEstimatedRevenue,
 		})
 	}
-	fmt.Println(rowsList)
 	return rowsList
 }
 
-func QueryAdSenseDomain(db *gorm.DB) map[string][]string {
+func SelectAdSenseDomain(db *gorm.DB) map[string][]string {
 	table := "adsense_report_daily"
-	rows, err := db.Table(table).Model(&AdSenseDomain{}).Select("ad_client_id, GROUP_CONCAT(distinct domain_name) as domain_name").Where("domain_name is not null and domain_name != ?", "webcaches").Group("ad_client_id").Order("ad_client_id").Rows()
+	rows, err := db.Table(table).Model(&AdSenseDomain{}).Select("ad_client_id, GROUP_CONCAT(distinct domain_name) AS domain_name").Where("domain_name IS NOT NULL AND domain_name != ?", "webcaches").Group("ad_client_id").Order("ad_client_id").Rows()
 	if err != nil {
 		fmt.Println(err)
 		return nil
@@ -92,20 +90,4 @@ func QueryAdSenseDomain(db *gorm.DB) map[string][]string {
 		rowsMap[accountId] = domainSlice
 	}
 	return rowsMap
-}
-
-func QueryAdSenseReportList(db *gorm.DB, accountId []string, startDate int, endDate int) []common.JSON{
-	caAccountId := common.GetCaAccountIds(accountId)
-	reportList := QueryAdSenseReport(db, caAccountId, common.ConvertTime(startDate), common.ConvertTime(endDate))
-	return reportList
-}
-
-func QueryAdSenseRevenueList(db *gorm.DB, accountId []string, startDate int, endDate int) []common.JSON{
-	reportList := QueryAdSenseRevenue(db, accountId, common.ConvertTime(startDate), common.ConvertTime(endDate))
-	return reportList
-}
-
-func QueryAdSenseDomainList(db *gorm.DB) map[string][]string {
-	response := QueryAdSenseDomain(db)
-	return response
 }

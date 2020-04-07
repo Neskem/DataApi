@@ -9,25 +9,10 @@ import (
 
 type YnaReport = YNA.YnaReprot
 
-func QueryYnaReport(db *gorm.DB, adUnitId int, date int) common.JSON {
+func SelectYnaReportList(db *gorm.DB, adUnitId []int, startDate int, endDate int) []common.JSON {
 	table := "yna_report"
 	var ynaReport YnaReport
-	db.Table(table).Where("adunit_id = ? and date = ?", adUnitId, date).First(&ynaReport)
-	fmt.Println(ynaReport)
-	return common.JSON{
-		"date": date,
-		"adunit_id": adUnitId,
-		"impressions": ynaReport.Impressions,
-		"clicks": ynaReport.Clicks,
-		"revenueInTWD": ynaReport.Revenueintwd,
-		"customerRevenueInTWD": ynaReport.Customerrevenueintwd,
-	}
-}
-
-func QueryYnaReportFix(db *gorm.DB, adUnitId []int, startDate int, endDate int) []common.JSON {
-	table := "yna_report"
-	var ynaReport YnaReport
-	rows, err := db.Table(table).Model(&ynaReport).Where("adunit_id IN (?) and date BETWEEN ? AND ?", adUnitId, startDate, endDate).Rows()
+	rows, err := db.Table(table).Model(&ynaReport).Where("adunit_id IN (?) AND DATE BETWEEN ? AND ?", adUnitId, startDate, endDate).Rows()
 	if err != nil {
 		fmt.Println(err)
 		return nil
@@ -51,9 +36,4 @@ func QueryYnaReportFix(db *gorm.DB, adUnitId []int, startDate int, endDate int) 
 		})
 	}
 	return rowsList
-}
-
-func QueryYnaReportList(db *gorm.DB, StartDate int, EndDate int, adUnitIds []int) []common.JSON {
-	result := QueryYnaReportFix(db, adUnitIds, StartDate, EndDate)
-	return result
 }

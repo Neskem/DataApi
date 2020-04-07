@@ -7,6 +7,6 @@ import (
 )
 
 func QueryYnaReportList(db *gorm.DB, StartDate int, EndDate int, adUnitIds []int) []common.JSON {
-	result := orm.QueryYnaReportFix(db, adUnitIds, StartDate, EndDate)
+	result := orm.SelectYnaReportList(db, adUnitIds, StartDate, EndDate)
 	return result
 }

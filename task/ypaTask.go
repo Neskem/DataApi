@@ -7,6 +7,6 @@ import (
 )
 
 func QueryDailyYpaList(db *gorm.DB, startDate int, endDate int) []common.JSON {
-	response := orm.QueryBetweenDailyYpa(db, startDate, endDate)
+	response := orm.SelectBetweenDailyYpa(db, startDate, endDate)
 	return response
 }

@@ -2,7 +2,6 @@ package spark
 
 import (
 	"DataApi.Go/database/models/PV"
-	"DataApi.Go/database/orm"
 	"DataApi.Go/lib/common"
 	"DataApi.Go/task"
 	"fmt"
@@ -13,7 +12,7 @@ import (
 
 type StatPagePV = PV.StatPagePV
 
-func ReadDailyPV(c *gin.Context) {
+func PostDailyPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	type RequestBody struct {
@@ -28,17 +27,27 @@ func ReadDailyPV(c *gin.Context) {
 		return
 	}
 
+	urls := common.Unique(requestBody.Urls)
 	betweenDates := common.GetBetweenDays(requestBody.StartDate, requestBody.EndDate, false)
-
-	result := orm.QueryUrlPvList2(db, betweenDates, requestBody.Urls)
+	result := task.QueryDailyPvList(db, betweenDates, urls)
+	var response []common.JSON
+	for _, url := range requestBody.Urls {
+		data := common.JSON{
+			"start_date": requestBody.StartDate,
+			"end_date": requestBody.EndDate,
+			"url": url,
+			"page_id": common.GetPageID(url),
+			"pv_valid": 0 + result[url],
+		}
+		response = append(response, data)
+	}
 	c.JSON(200, common.JSON{
 		"status": true,
-		"data": result,
+		"data": response,
 	})
-
 }
 
-func ReadMonthlyPV(c *gin.Context) {
+func PostMonthlyPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	type RequestBody struct {
@@ -52,15 +61,15 @@ func ReadMonthlyPV(c *gin.Context) {
 		return
 	}
 
-	result := orm.GetMonthlyPVList(db, strconv.Itoa(requestBody.Month), requestBody.Urls)
+	urls := common.Unique(requestBody.Urls)
+	result := task.QueryMonthlyPvList(db, strconv.Itoa(requestBody.Month), urls)
 	c.JSON(200, common.JSON{
 		"status": true,
 		"data": result,
 	})
-
 }
 
-func ReadTotalPV(c *gin.Context) {
+func PostTotalPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	type RequestBody struct {
@@ -74,12 +83,34 @@ func ReadTotalPV(c *gin.Context) {
 	}
 
 	urls := common.Unique(requestBody.Urls)
-	result := orm.GetTotalPVList(db, urls)
+	result := task.QueryTotalPvList(db, urls)
 	c.JSON(200, common.JSON{
 		"status": true,
 		"data": result,
 	})
+}
 
+func PostMovePV(c *gin.Context) {
+	db := c.MustGet("db").(*gorm.DB)
+
+	type RequestBody struct {
+		Mappings []map[string]string `json:"mappings" binding:"required"`
+		StartDate int `json:"start_date" binding:"required"`
+		EndDate int `json:"end_date" binding:"required"`
+		Author string `json:"author" binding:"required"`
+	}
+	var requestBody RequestBody
+	if err := c.BindJSON(&requestBody); err != nil {
+		fmt.Println(err)
+		c.AbortWithStatus(400)
+		return
+	}
+	fmt.Println(requestBody.Mappings)
+	betweenDates := common.GetBetweenDays(requestBody.StartDate, requestBody.EndDate, false)
+	result := task.MoveDailyPv(db, requestBody.Author, betweenDates, requestBody.Mappings)
+	c.JSON(200, common.JSON{
+		"status": result,
+	})
 }
 
 func GetAuthorPV(c *gin.Context) {
@@ -93,7 +124,7 @@ func GetAuthorPV(c *gin.Context) {
 	}
 
 	betweenDates := common.GetBetweenDays(startDate, endDate, false)
-	pv := task.GetPvListByAuthor(db, betweenDates, author, hostName)
+	pv := task.QueryPvListByAuthorAndHost(db, betweenDates, author, hostName)
 	result := common.JSON{
 		"status": true,
 		"data": common.JSON{
@@ -107,17 +138,6 @@ func GetAuthorPV(c *gin.Context) {
 	c.JSON(200, result)
 }
 
-//func GetHostPV(c *gin.Context) {
-//	db := c.MustGet("db").(*gorm.DB)
-//	startDate, _ := strconv.Atoi(c.Query("start_date"))
-//	endDate, _ := strconv.Atoi(c.Query("end_date"))
-//	hostName := c.Query("hostname")
-//
-//	betweenDates := common.GetBetweenDays(startDate, endDate, false)
-//	result := orm.QueryHost(db, betweenDates, hostName)
-//	c.JSON(200, result)
-//}
-
 func GetHostPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 	startDate, _ := strconv.Atoi(c.Query("start_date"))
@@ -125,7 +145,7 @@ func GetHostPV(c *gin.Context) {
 	hostName := c.Query("hostname")
 
 	betweenDates := common.GetBetweenDays(startDate, endDate, false)
-	pv := task.GetPvListByFunction(db, betweenDates, hostName, orm.QueryPvValidByHost)
+	pv := task.QueryPvListByHost(db, betweenDates, hostName)
 	result := common.JSON{
 		"status": true,
 		"data": common.JSON{

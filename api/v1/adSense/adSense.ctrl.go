@@ -1,14 +1,14 @@
 package adSense
 
 import (
-	"DataApi.Go/database/orm"
 	"DataApi.Go/lib/common"
+	"DataApi.Go/task"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
 
-func ReadDailyAdSense(c *gin.Context) {
+func PostDailyAdSense(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	type RequestBody struct {
@@ -23,11 +23,14 @@ func ReadDailyAdSense(c *gin.Context) {
 		return
 	}
 	accountIds := common.Unique(requestBody.AccountIds)
-	result := orm.QueryAdSenseReportList(db, accountIds, requestBody.StartDate, requestBody.EndDate)
-	c.JSON(200, common.JSON{"status": true, "data": result})
+	result := task.QueryAdSenseReportList(db, accountIds, requestBody.StartDate, requestBody.EndDate)
+	c.JSON(200, common.JSON{
+		"status": true,
+		"data": result,
+	})
 }
 
-func ReadDailyAdSenseRevenue(c *gin.Context) {
+func PostDailyAdSenseRevenue(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	type RequestBody struct {
@@ -42,13 +45,16 @@ func ReadDailyAdSenseRevenue(c *gin.Context) {
 		return
 	}
 	accountIds := common.Unique(requestBody.AccountIds)
-	result := orm.QueryAdSenseRevenueList(db, accountIds, requestBody.StartDate, requestBody.EndDate)
-	c.JSON(200, common.JSON{"status": true, "data": result})
+	result := task.QueryAdSenseRevenueList(db, accountIds, requestBody.StartDate, requestBody.EndDate)
+	c.JSON(200, common.JSON{
+		"status": true,
+		"data": result,
+	})
 }
 
 func GetAdSenseDomains(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
-	result := orm.QueryAdSenseDomainList(db)
+	result := task.QueryAdSenseDomainList(db)
 	c.JSON(200, common.JSON{
 		"status": true,
 		"data": result,

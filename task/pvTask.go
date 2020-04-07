@@ -3,30 +3,29 @@ package task
 import (
 	"DataApi.Go/database/orm"
 	"DataApi.Go/lib/common"
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"sync"
 )
 
-type queryPv func(db *gorm.DB, date string, queryTarget string) int
-
-func GetTotalPvList(db *gorm.DB, urls []string) []common.JSON{
-	response := orm.QueryTotalPVList(db, urls)
+func QueryTotalPvList(db *gorm.DB, urls []string) []common.JSON{
+	response := orm.SelectTotalPvList(db, urls)
 	return response
 }
 
-func GetMonthlyPvList(db *gorm.DB, month string, urls []string) []common.JSON{
-	response := orm.QueryMonthlyPVList(db, month, urls)
+func QueryMonthlyPvList(db *gorm.DB, month string, urls []string) []common.JSON{
+	response := orm.SelectMonthlyPVList(db, month, urls)
 	return response
 }
 
-func GetPvListByFunction(db *gorm.DB, betweenDate []string, target string, function queryPv) int{
+func QueryPvListByHost(db *gorm.DB, betweenDate []string, hostName string) int{
 	result := make(chan int, len(betweenDate))
 	wg := sync.WaitGroup{}
 	wg.Add(len(betweenDate))
 	for _, date := range betweenDate {
 		go func(date string) {
 			defer wg.Done()
-			pv := function(db, date, target)
+			pv := orm.SelectPvByHost(db, date, hostName)
 			result <- pv
 		}(date)
 	}
@@ -41,14 +40,14 @@ func GetPvListByFunction(db *gorm.DB, betweenDate []string, target string, funct
 	return totalPv
 }
 
-func GetPvListByAuthor(db *gorm.DB, betweenDate []string, author string, hostName string) int{
+func QueryPvListByAuthorAndHost(db *gorm.DB, betweenDate []string, author string, hostName string) int{
 	result := make(chan int, len(betweenDate))
 	wg := sync.WaitGroup{}
 	wg.Add(len(betweenDate))
 	for _, date := range betweenDate {
 		go func(date string) {
 			defer wg.Done()
-			pv := orm.QueryPvValidByAuthorAndHost(db, date, author, hostName)
+			pv := orm.SelectPvByAuthorAndHost(db, date, author, hostName)
 			result <- pv
 		}(date)
 	}
@@ -63,24 +62,83 @@ func GetPvListByAuthor(db *gorm.DB, betweenDate []string, author string, hostNam
 	return totalPv
 }
 
-func GetDailyPvList(db *gorm.DB, betweenDate []string, urls []string) []common.JSON{
-	result := make(chan int, len(urls))
+func QueryDailyPvList(db *gorm.DB, betweenDate []string, urls []string) map[string]int{
+	result := make(chan map[string]int, len(betweenDate))
+	var pageIds []string
+	for _, url := range urls {
+		pageId := common.GetPageID(url)
+		pageIds = append(pageIds, pageId)
+	}
+	wg := sync.WaitGroup{}
+	wg.Add(len(betweenDate))
+	for _, date := range betweenDate{
+		go func(date string) {
+			defer wg.Done()
+			rowsMap := orm.SelectPvList(db, date, pageIds)
+			result <- rowsMap
+		}(date)
+	}
 	go func() {
-		for _, url := range urls {
-			pv := orm.QuerySparkPVByUrl(db, betweenDate, url)
-			result <- pv
-		}
+		wg.Wait()
 		close(result)
 	}()
-	var response []common.JSON
+	keyVal := make(map[string]int)
+	for _, url := range urls {
+		keyVal[url] = 0
+	}
 
 	index := 0
 	for n := range result {
-		response = append(response, common.JSON{
-			"url": urls[index],
-			"pv_valid": n,
-		})
+		for _, url := range urls {
+			keyVal[url] = keyVal[url] + n[url]
+		}
 		index = index + 1
 	}
-	return response
+	return keyVal
+}
+
+func MoveDailyPv(db *gorm.DB, author string, betweenDate []string, mappings []map[string]string) bool {
+	//result := make(chan map[string]common.JSON, len(betweenDate))
+	var mutex sync.Mutex
+	var pageIdMappings []map[string]string
+	var pageIdsArray []string
+	orm.GlobalRows = make(map[string]map[string]map[string]string)
+	for _, mapping := range mappings {
+		newUrl := "https://zi.media/" + "@" + author + "/" + "post" + "/" + mapping["new"]
+		newPageId := common.GetPageID(newUrl)
+		oldUrl := "https://zi.media/" + "@" + author + "/" + "post" + "/" + mapping["old"]
+		oldPageId := common.GetPageID(oldUrl)
+		pageIdMapping := make(map[string]string)
+		pageIdMapping["old"] = oldPageId
+		pageIdMapping["new"] = newPageId
+		pageIdsArray = append(pageIdsArray, oldPageId)
+		pageIdsArray = append(pageIdsArray, newPageId)
+		pageIdMappings = append(pageIdMappings, pageIdMapping)
+	}
+	wg := sync.WaitGroup{}
+	wg.Add(len(betweenDate))
+	for _, date := range betweenDate {
+		go func(date string) {
+			defer wg.Done()
+			mutex.Lock()
+			orm.SelectPvDataByPageId(db, date, pageIdsArray)
+			//result <- pvData
+			mutex.Unlock()
+		}(date)
+	}
+	go func() {
+		wg.Wait()
+		//close(result)
+		for date, pageIdMap := range orm.GlobalRows {
+			fmt.Println(date)
+			for pageId, dataMap := range pageIdMap {
+				fmt.Println(pageId )
+				for key, value := range dataMap {
+					fmt.Println(key, ": ", value)
+				}
+			}
+		}
+	}()
+
+	return true
 }

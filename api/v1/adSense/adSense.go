@@ -8,8 +8,8 @@ import (
 func ApplyRoutes(r *gin.RouterGroup) {
 	posts := r.Group("/adsense")
 	{
-		posts.POST("/daily", ReadDailyAdSense)
-		posts.POST("/adexchange/revenue", ReadDailyAdSenseRevenue)
+		posts.POST("/daily", PostDailyAdSense)
+		posts.POST("/adexchange/revenue", PostDailyAdSenseRevenue)
 		posts.GET("/domains", GetAdSenseDomains)
 	}
 }

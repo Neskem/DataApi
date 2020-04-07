@@ -9,14 +9,7 @@ import (
 
 type YpaReportDaily = YPA.YpaReportDaily
 
-func QueryDailyYpa(db *gorm.DB, date string) float64 {
-	table := "ypa_report_daily"
-	var ypaReportDaily YpaReportDaily
-	db.Table(table).Where("date = ?", date).First(&ypaReportDaily)
-	return ypaReportDaily.Revenue
-}
-
-func QueryBetweenDailyYpa(db *gorm.DB, startDate int, endDate int) []common.JSON {
+func SelectBetweenDailyYpa(db *gorm.DB, startDate int, endDate int) []common.JSON {
 	table := "ypa_report_daily"
 	var ypaReportDaily YpaReportDaily
 	rows, err := db.Table(table).Model(&ypaReportDaily).Where("date BETWEEN ? AND ?", startDate, endDate).Rows()
@@ -38,9 +31,4 @@ func QueryBetweenDailyYpa(db *gorm.DB, startDate int, endDate int) []common.JSON
 		})
 	}
 	return rowsList
-}
-
-func QueryDailyYpaList(db *gorm.DB, startDate int, endDate int) []common.JSON {
-	response := QueryBetweenDailyYpa(db, startDate, endDate)
-	return response
 }
