@@ -11,7 +11,7 @@ type Post struct {
 	gorm.Model
 	Text       string        `sql:"type:text;"`
 	StatPagePV PV.StatPagePV `gorm:"foreignkey:UserID"`
-	UserID     uint
+	Revenueinusd     float64	     `gorm:"type:double;"`
 }
 
 // Serialize serializes spark data

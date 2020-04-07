@@ -119,3 +119,15 @@ func Unique(stringSlice []string) []string {
 	}
 	return list
 }
+
+func GetCaAccountIds(accountIds []string) []string{
+	var caAccountIds []string
+	for _, id := range accountIds {
+		caAccountIds = append(caAccountIds, "ca-" + id)
+	}
+	return caAccountIds
+}
+
+func GetZiUrl(author string, articleId string) string{
+	return "https://zi.media/" + "@" + author + "/" + "post" + "/" + articleId
+}

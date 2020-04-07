@@ -2,7 +2,7 @@ package AdSense
 
 type AdmanagerAdexchangeAdunitReportDaily struct {
 	ID        uint `gorm:"primary_key"`
-	NetworkCode uint64 `gorm:"type:bigint(20);"`
+	NetworkCode string `gorm:"type:bigint(20);"`
 	Date string `gorm:"type:date;"`
 	AdExchangeSiteName string `gorm:"type:varchar(256);column:ad_exchange_site_name;"`
 	DeviceCategoryId string `gorm:"type:varchar(45);column:device_category_id;"`

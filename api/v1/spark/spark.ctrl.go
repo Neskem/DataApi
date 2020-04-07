@@ -2,8 +2,8 @@ package spark
 
 import (
 	"DataApi.Go/database/models/PV"
-	"DataApi.Go/database/orm"
 	"DataApi.Go/lib/common"
+	"DataApi.Go/task"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -12,7 +12,7 @@ import (
 
 type StatPagePV = PV.StatPagePV
 
-func ReadDailyPV(c *gin.Context) {
+func PostDailyPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	type RequestBody struct {
@@ -27,14 +27,27 @@ func ReadDailyPV(c *gin.Context) {
 		return
 	}
 
+	urls := common.Unique(requestBody.Urls)
 	betweenDates := common.GetBetweenDays(requestBody.StartDate, requestBody.EndDate, false)
-
-	result := orm.QueryUrlList(db, betweenDates, requestBody.Urls)
-	c.JSON(200, result)
-
+	result := task.QueryDailyPvList(db, betweenDates, urls)
+	var response []common.JSON
+	for _, url := range requestBody.Urls {
+		data := common.JSON{
+			"start_date": requestBody.StartDate,
+			"end_date": requestBody.EndDate,
+			"url": url,
+			"page_id": common.GetPageID(url),
+			"pv_valid": 0 + result[url],
+		}
+		response = append(response, data)
+	}
+	c.JSON(200, common.JSON{
+		"status": true,
+		"data": response,
+	})
 }
 
-func ReadMonthlyPV(c *gin.Context) {
+func PostMonthlyPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	type RequestBody struct {
@@ -48,12 +61,15 @@ func ReadMonthlyPV(c *gin.Context) {
 		return
 	}
 
-	result := orm.GetMonthlyList(db, strconv.Itoa(requestBody.Month), requestBody.Urls)
-	c.JSON(200, result)
-
+	urls := common.Unique(requestBody.Urls)
+	result := task.QueryMonthlyPvList(db, strconv.Itoa(requestBody.Month), urls)
+	c.JSON(200, common.JSON{
+		"status": true,
+		"data": result,
+	})
 }
 
-func ReadTotalPV(c *gin.Context) {
+func PostTotalPV(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	type RequestBody struct {
@@ -66,9 +82,35 @@ func ReadTotalPV(c *gin.Context) {
 		return
 	}
 
-	result := orm.GetTotalList(db, requestBody.Urls)
-	c.JSON(200, result)
+	urls := common.Unique(requestBody.Urls)
+	result := task.QueryTotalPvList(db, urls)
+	c.JSON(200, common.JSON{
+		"status": true,
+		"data": result,
+	})
+}
 
+func PostMovePV(c *gin.Context) {
+	db := c.MustGet("db").(*gorm.DB)
+
+	type RequestBody struct {
+		Mappings []map[string]string `json:"mappings" binding:"required"`
+		StartDate int `json:"start_date" binding:"required"`
+		EndDate int `json:"end_date" binding:"required"`
+		Author string `json:"author" binding:"required"`
+	}
+	var requestBody RequestBody
+	if err := c.BindJSON(&requestBody); err != nil {
+		fmt.Println(err)
+		c.AbortWithStatus(400)
+		return
+	}
+	fmt.Println(requestBody.Mappings)
+	betweenDates := common.GetBetweenDays(requestBody.StartDate, requestBody.EndDate, false)
+	result := task.MoveDailyPv(db, requestBody.Author, betweenDates, requestBody.Mappings)
+	c.JSON(200, common.JSON{
+		"status": result,
+	})
 }
 
 func GetAuthorPV(c *gin.Context) {
@@ -76,11 +118,24 @@ func GetAuthorPV(c *gin.Context) {
 	startDate, _ := strconv.Atoi(c.Query("start_date"))
 	endDate, _ := strconv.Atoi(c.Query("end_date"))
 	author := c.Query("author")
+	hostName := c.Query("hostname")
+	if hostName == ""{
+		hostName = "zi.media"
+	}
 
 	betweenDates := common.GetBetweenDays(startDate, endDate, false)
-	result := orm.QueryAuthor(db, betweenDates, author)
+	pv := task.QueryPvListByAuthorAndHost(db, betweenDates, author, hostName)
+	result := common.JSON{
+		"status": true,
+		"data": common.JSON{
+			"start_date": startDate,
+			"end_date":   endDate,
+			"author":   author,
+			"hostname": hostName,
+			"pv_valid":   pv,
+		},
+	}
 	c.JSON(200, result)
-
 }
 
 func GetHostPV(c *gin.Context) {
@@ -90,6 +145,15 @@ func GetHostPV(c *gin.Context) {
 	hostName := c.Query("hostname")
 
 	betweenDates := common.GetBetweenDays(startDate, endDate, false)
-	result := orm.QueryHost(db, betweenDates, hostName)
+	pv := task.QueryPvListByHost(db, betweenDates, hostName)
+	result := common.JSON{
+		"status": true,
+		"data": common.JSON{
+			"start_date": startDate,
+			"end_date":   endDate,
+			"hostname":   hostName,
+			"pv_valid":   pv,
+		},
+	}
 	c.JSON(200, result)
 }
