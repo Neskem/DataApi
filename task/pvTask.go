@@ -139,19 +139,22 @@ func MoveDailyPvFunc(rows map[string]map[string]map[string]int, mappingMap map[s
 		for pageId := range pageIdMap {
 			oldPageId, ok := mappingMap[pageId]
 			if ok {
-				rows[date][pageId]["pv"] = rows[date][pageId]["pv"] + rows[date][oldPageId]["pv"]
-				rows[date][pageId]["pv_valid"] = rows[date][pageId]["pv_valid"] + rows[date][oldPageId]["pv_valid"]
-				rows[date][pageId]["pv_invalid"] = rows[date][pageId]["pv_invalid"] + rows[date][oldPageId]["pv_invalid"]
-				rows[date][pageId]["pv_count"] = rows[date][pageId]["pv_count"] + rows[date][oldPageId]["pv_count"]
-				rows[date][pageId]["stay_0_count"] = rows[date][pageId]["stay_0_count"] + rows[date][oldPageId]["stay_0_count"]
-				rows[date][pageId]["stay_1_count"] = rows[date][pageId]["stay_1_count"] + rows[date][oldPageId]["stay_1_count"]
+				_, ok := rows[date][oldPageId]
+				if ok {
+					rows[date][pageId]["pv"] = rows[date][pageId]["pv"] + rows[date][oldPageId]["pv"]
+					rows[date][pageId]["pv_valid"] = rows[date][pageId]["pv_valid"] + rows[date][oldPageId]["pv_valid"]
+					rows[date][pageId]["pv_invalid"] = rows[date][pageId]["pv_invalid"] + rows[date][oldPageId]["pv_invalid"]
+					rows[date][pageId]["pv_count"] = rows[date][pageId]["pv_count"] + rows[date][oldPageId]["pv_count"]
+					rows[date][pageId]["stay_0_count"] = rows[date][pageId]["stay_0_count"] + rows[date][oldPageId]["stay_0_count"]
+					rows[date][pageId]["stay_1_count"] = rows[date][pageId]["stay_1_count"] + rows[date][oldPageId]["stay_1_count"]
 
-				rows[date][oldPageId]["pv"] = 0
-				rows[date][oldPageId]["pv_valid"] = 0
-				rows[date][oldPageId]["pv_invalid"] = 0
-				rows[date][oldPageId]["pv_count"] = 0
-				rows[date][oldPageId]["stay_0_count"] = 0
-				rows[date][oldPageId]["stay_1_count"]= 0
+					rows[date][oldPageId]["pv"] = 0
+					rows[date][oldPageId]["pv_valid"] = 0
+					rows[date][oldPageId]["pv_invalid"] = 0
+					rows[date][oldPageId]["pv_count"] = 0
+					rows[date][oldPageId]["stay_0_count"] = 0
+					rows[date][oldPageId]["stay_1_count"]= 0
+				}
 			}
 		}
 	}
