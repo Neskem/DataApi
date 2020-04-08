@@ -109,9 +109,11 @@ func SelectTotalPvList(db *gorm.DB, urls []string) []common.JSON {
 	rows, err := db.Table(table).Model(pvPageIdSum).Where("page_id IN (?)", pageIds).Rows()
 	if err != nil {
 		fmt.Println(err)
+		return nil
 	}
 	defer rows.Close()
 	var rowsList []common.JSON
+	var innerList []string
 	for rows.Next() {
 		var pvPageIdSum PVPageIdSum
 		err := db.ScanRows(rows, &pvPageIdSum)
@@ -124,6 +126,17 @@ func SelectTotalPvList(db *gorm.DB, urls []string) []common.JSON {
 			"page_id": pvPageIdSum.PageId,
 			"pv_valid": pvPageIdSum.PvValid,
 		})
+		innerList = append(innerList, pageIdMap[pvPageIdSum.PageId])
+	}
+	diff := common.Difference(urls, innerList)
+	if len(diff) != 0 {
+		for _, url := range diff {
+			rowsList = append(rowsList, common.JSON{
+				"url": url,
+				"page_id": common.GetPageID(url),
+				"pv_valid": 0,
+			})
+		}
 	}
 	return rowsList
 }
@@ -141,9 +154,11 @@ func SelectMonthlyPVList(db *gorm.DB, month string, urls []string) []common.JSON
 	rows, err := db.Table(table).Model(monthlyPv).Where("page_id IN (?)", pageIds).Rows()
 	if err != nil {
 		fmt.Println(err)
+		return nil
 	}
 	defer rows.Close()
 	var rowsList []common.JSON
+	var innerList []string
 	for rows.Next() {
 		var monthlyPv PVMonthly
 		err := db.ScanRows(rows, &monthlyPv)
@@ -156,6 +171,17 @@ func SelectMonthlyPVList(db *gorm.DB, month string, urls []string) []common.JSON
 			"page_id": monthlyPv.PageId,
 			"pv_valid": monthlyPv.PvValid,
 		})
+		innerList = append(innerList, pageIdMap[monthlyPv.PageId])
+	}
+	diff := common.Difference(urls, innerList)
+	if len(diff) != 0 {
+		for _, url := range diff {
+			rowsList = append(rowsList, common.JSON{
+				"url": url,
+				"page_id": common.GetPageID(url),
+				"pv_valid": 0,
+			})
+		}
 	}
 	return rowsList
 }
