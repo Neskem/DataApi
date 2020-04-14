@@ -28,8 +28,8 @@ func PostAllotting(c *gin.Context) {
 
 	type RequestBody struct {
 		Username []string `json:"username" binding:"required"`
-		StartDate int `json:"month" start_date:"required"`
-		EndDate int `json:"month" end_date:"required"`
+		StartDate string `json:"month" start_date:"required"`
+		EndDate string `json:"month" end_date:"required"`
 	}
 	var requestBody RequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
@@ -38,8 +38,8 @@ func PostAllotting(c *gin.Context) {
 		return
 	}
 
-	startDate, _ := strconv.Atoi(c.Query("start_date"))
-	endDate, _ := strconv.Atoi(c.Query("end_date"))
+	startDate, _ := strconv.Atoi(requestBody.StartDate)
+	endDate, _ := strconv.Atoi(requestBody.EndDate)
 
 	result := task.QueryDailyYpaList(db, startDate, endDate)
 	response := common.JSON{
