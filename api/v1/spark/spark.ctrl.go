@@ -17,8 +17,8 @@ func PostDailyPV(c *gin.Context) {
 
 	type RequestBody struct {
 		Urls []string `json:"urls" binding:"required"`
-		StartDate int `json:"start_date" binding:"required"`
-		EndDate int `json:"end_date" binding:"required"`
+		StartDate string `json:"start_date" binding:"required"`
+		EndDate string `json:"end_date" binding:"required"`
 	}
 	var requestBody RequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
@@ -28,7 +28,9 @@ func PostDailyPV(c *gin.Context) {
 	}
 
 	urls := common.Unique(requestBody.Urls)
-	betweenDates := common.GetBetweenDays(requestBody.StartDate, requestBody.EndDate, false)
+	startDate, _ := strconv.Atoi(requestBody.StartDate)
+	endDate, _ := strconv.Atoi(requestBody.EndDate)
+	betweenDates := common.GetBetweenDays(startDate, endDate, false)
 	result := task.QueryDailyPvList(db, betweenDates, urls)
 	var response []common.JSON
 	for _, url := range requestBody.Urls {
@@ -52,7 +54,7 @@ func PostMonthlyPV(c *gin.Context) {
 
 	type RequestBody struct {
 		Urls []string `json:"urls" binding:"required"`
-		Month int `json:"month" binding:"required"`
+		Month string `json:"month" binding:"required"`
 	}
 	var requestBody RequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
@@ -62,7 +64,7 @@ func PostMonthlyPV(c *gin.Context) {
 	}
 
 	urls := common.Unique(requestBody.Urls)
-	result := task.QueryMonthlyPvList(db, strconv.Itoa(requestBody.Month), urls)
+	result := task.QueryMonthlyPvList(db, requestBody.Month, urls)
 	c.JSON(200, common.JSON{
 		"status": true,
 		"data": result,
@@ -95,8 +97,8 @@ func PostMovePV(c *gin.Context) {
 
 	type RequestBody struct {
 		Mappings []map[string]string `json:"mappings" binding:"required"`
-		StartDate int `json:"start_date" binding:"required"`
-		EndDate int `json:"end_date" binding:"required"`
+		StartDate string `json:"start_date" binding:"required"`
+		EndDate string `json:"end_date" binding:"required"`
 		Author string `json:"author" binding:"required"`
 	}
 	var requestBody RequestBody
@@ -105,8 +107,9 @@ func PostMovePV(c *gin.Context) {
 		c.AbortWithStatus(400)
 		return
 	}
-	fmt.Println(requestBody.Mappings)
-	betweenDates := common.GetBetweenDays(requestBody.StartDate, requestBody.EndDate, false)
+	startDate, _ := strconv.Atoi(requestBody.StartDate)
+	endDate, _ := strconv.Atoi(requestBody.EndDate)
+	betweenDates := common.GetBetweenDays(startDate, endDate, false)
 	result := task.MoveDailyPv(db, requestBody.Author, betweenDates, requestBody.Mappings)
 	c.JSON(200, common.JSON{
 		"status": result,
