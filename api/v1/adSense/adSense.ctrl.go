@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
+	"strconv"
 )
 
 func PostDailyAdSense(c *gin.Context) {
@@ -13,8 +14,8 @@ func PostDailyAdSense(c *gin.Context) {
 
 	type RequestBody struct {
 		AccountIds []string `json:"account_ids" binding:"required"`
-		StartDate int `json:"start_date" binding:"required"`
-		EndDate int `json:"end_date" binding:"required"`
+		StartDate string `json:"start_date" binding:"required"`
+		EndDate string `json:"end_date" binding:"required"`
 	}
 	var requestBody RequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
@@ -23,7 +24,9 @@ func PostDailyAdSense(c *gin.Context) {
 		return
 	}
 	accountIds := common.Unique(requestBody.AccountIds)
-	result := task.QueryAdSenseReportList(db, accountIds, requestBody.StartDate, requestBody.EndDate)
+	startDate, _ := strconv.Atoi(requestBody.StartDate)
+	endDate, _ := strconv.Atoi(requestBody.EndDate)
+	result := task.QueryAdSenseReportList(db, accountIds, startDate, endDate)
 	c.JSON(200, common.JSON{
 		"status": true,
 		"data": result,
@@ -35,8 +38,8 @@ func PostDailyAdSenseRevenue(c *gin.Context) {
 
 	type RequestBody struct {
 		AccountIds []string `json:"account_ids" binding:"required"`
-		StartDate int `json:"start_date" binding:"required"`
-		EndDate int `json:"end_date" binding:"required"`
+		StartDate string `json:"start_date" binding:"required"`
+		EndDate string `json:"end_date" binding:"required"`
 	}
 	var requestBody RequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
@@ -45,7 +48,9 @@ func PostDailyAdSenseRevenue(c *gin.Context) {
 		return
 	}
 	accountIds := common.Unique(requestBody.AccountIds)
-	result := task.QueryAdSenseRevenueList(db, accountIds, requestBody.StartDate, requestBody.EndDate)
+	startDate, _ := strconv.Atoi(requestBody.StartDate)
+	endDate, _ := strconv.Atoi(requestBody.EndDate)
+	result := task.QueryAdSenseRevenueList(db, accountIds, startDate, endDate)
 	c.JSON(200, common.JSON{
 		"status": true,
 		"data": result,

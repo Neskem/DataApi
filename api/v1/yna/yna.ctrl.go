@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
+	"strconv"
 )
 
 func PostYNAReport(c *gin.Context) {
@@ -13,8 +14,8 @@ func PostYNAReport(c *gin.Context) {
 
 	type RequestBody struct {
 		AdUnitIds []int `json:"adunit_ids" binding:"required"`
-		StartDate int `json:"start_date" binding:"required"`
-		EndDate int `json:"end_date" binding:"required"`
+		StartDate string `json:"start_date" binding:"required"`
+		EndDate string `json:"end_date" binding:"required"`
 	}
 	var requestBody RequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
@@ -22,8 +23,9 @@ func PostYNAReport(c *gin.Context) {
 		c.AbortWithStatus(400)
 		return
 	}
-
-	result := task.QueryYnaReportList(db, requestBody.StartDate, requestBody.EndDate, requestBody.AdUnitIds)
+	startDate, _ := strconv.Atoi(requestBody.StartDate)
+	endDate, _ := strconv.Atoi(requestBody.EndDate)
+	result := task.QueryYnaReportList(db, startDate, endDate, requestBody.AdUnitIds)
 	response := common.JSON{
 		"status": true,
 		"data": result,
