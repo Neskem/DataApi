@@ -18,6 +18,6 @@ func QueryAdSenseRevenueList(db *gorm.DB, accountId []string, startDate int, end
 }
 
 func QueryAdSenseDomainList(db *gorm.DB) map[string][]string {
-	response := orm.SelectAdSenseDomain(db)
+	response := orm.SelectAdSenseDomainMapping(db)
 	return response
 }
