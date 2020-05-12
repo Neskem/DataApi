@@ -91,3 +91,28 @@ func SelectAdSenseDomain(db *gorm.DB) map[string][]string {
 	}
 	return rowsMap
 }
+
+func SelectAdSenseDomainMapping(db *gorm.DB) map[string][]string {
+	table := "adsense_pubid_domain_mapping"
+	rows, err := db.Table(table).Model(&AdSenseDomain{}).Select("ad_client_id, domain_name").Where("domain_name not like ?", "%webcache%").Rows()
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	defer rows.Close()
+	rowsMap := make(map[string][]string)
+	for rows.Next() {
+		var adSenseDomain AdSenseDomain
+		err := db.ScanRows(rows, &adSenseDomain)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+		if _, ok := rowsMap[adSenseDomain.AdClientId]; !ok{
+			rowsMap[adSenseDomain.AdClientId] = []string{adSenseDomain.DomainName}
+		} else {
+			rowsMap[adSenseDomain.AdClientId] = append(rowsMap[adSenseDomain.AdClientId], adSenseDomain.DomainName)
+		}
+	}
+	return rowsMap
+}
