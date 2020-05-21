@@ -21,7 +21,7 @@ services:
       - ./log/:/usr/local/go/src/DataApi.Go/log
     command: supervisord -n
     environment:
-      - DB_CONFIG=spark:1qaz@WSX@tcp(192.168.18.10:3306)/spark_pv
+      - DB_CONFIG=user:password@tcp(0.0.0.0:3306)/database
       - LOG_FILE_NAME=pv-api
     logging:
       driver: "json-file"
@@ -37,7 +37,7 @@ services:
       - ./log/:/usr/local/go/src/DataApi.Go/log
     command: supervisord -n
     environment:
-      - DB_CONFIG=breaktime:1qaz@WSX@tcp(192.168.18.10:3306)/report
+      - DB_CONFIG=user:password@tcp(0.0.0.0:3306)/database
       - LOG_FILE_NAME=report-api
     logging:
       driver: "json-file"
